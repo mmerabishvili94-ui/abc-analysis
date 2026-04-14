@@ -367,8 +367,8 @@ function renderParetoChart() {
     const canvas = $('paretoChart');
     const ctx = canvas.getContext('2d');
 
-    // Dynamic width for scrollability
-    const minBarWidth = 60;
+    // Dynamic width for scrollability — significantly increased for long labels
+    const minBarWidth = 120; 
     const requiredWidth = Math.max(canvas.parentElement.clientWidth, chartData.length * minBarWidth);
     canvas.style.width = requiredWidth + 'px';
 
@@ -477,14 +477,23 @@ function renderParetoChart() {
                     }
                 }
             },
+            layout: {
+                padding: {
+                    bottom: 30, // Extra space for rotated labels
+                    left: 10,
+                    right: 20
+                }
+            },
             scales: {
                 x: {
                     ticks: {
                         color: '#8B92A5',
                         font: { family: 'Inter', size: 11 },
-                        maxRotation: 60,
+                        maxRotation: 45,
                         minRotation: 45,
-                        autoSkip: false
+                        autoSkip: false,
+                        padding: 8,
+                        align: 'right',
                     },
                     grid: { display: false }
                 },
