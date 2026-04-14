@@ -21,4 +21,5 @@
 - [Chart.js](https://www.chartjs.org/) — для построения графиков.
 
 ---
-Развернуто на **GitHub Pages**.
+Развернуто на **GitHub Pages**: [https://mmerabishvili94-ui.github.io/abc-analysis/](https://mmerabishvili94-ui.github.io/abc-analysis/)
+
