@@ -479,7 +479,7 @@ function renderParetoChart() {
             },
             layout: {
                 padding: {
-                    bottom: 30, // Extra space for rotated labels
+                    bottom: 120, // Significantly increased space for long rotated labels
                     left: 10,
                     right: 20
                 }

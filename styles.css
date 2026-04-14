@@ -774,7 +774,7 @@ body {
 }
 
 .chart-container canvas {
-    min-height: 480px;
+    min-height: 650px;
     height: 100% !important;
 }
 
