@@ -1,0 +1,12 @@
+# Excel files with data
+*.xlsx
+*.xls
+*.csv
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
