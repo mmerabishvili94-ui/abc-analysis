@@ -774,7 +774,25 @@ body {
 }
 
 .chart-container canvas {
-    max-height: 520px;
+    min-height: 480px;
+    height: 100% !important;
+}
+
+.chart-scroll-wrap {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 12px;
+}
+
+/* Custom scrollbar for the chart scroll wrap */
+.chart-scroll-wrap::-webkit-scrollbar {
+    height: 6px;
+}
+.chart-scroll-wrap::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.2);
+}
+.chart-scroll-wrap::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.4);
 }
 
 .pareto-controls {

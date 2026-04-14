@@ -236,15 +236,17 @@
                     <div class="pareto-controls">
                         <label>Показать топ:</label>
                         <select id="paretoTopN" class="filter-select filter-select-sm">
-                            <option value="20">20</option>
-                            <option value="30" selected>30</option>
+                            <option value="10">10</option>
+                            <option value="20" selected>20</option>
+                            <option value="30">30</option>
                             <option value="50">50</option>
-                            <option value="100">100</option>
                         </select>
                     </div>
                 </div>
                 <div class="chart-container">
-                    <canvas id="paretoChart"></canvas>
+                    <div class="chart-scroll-wrap">
+                        <canvas id="paretoChart"></canvas>
+                    </div>
                 </div>
             </div>
         </section>

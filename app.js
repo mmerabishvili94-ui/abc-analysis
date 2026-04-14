@@ -344,32 +344,55 @@ tabPareto.addEventListener('click', () => switchTab('pareto'));
 
 // ── Pareto Chart ───────────────────────────
 function renderParetoChart() {
-    const topN = parseInt(paretoTopN.value) || 30;
-    let data = applyFilters(globalABC, false).slice(0, topN);
+    const topN = parseInt(paretoTopN.value) || 20;
+    const allFilteredData = applyFilters(globalABC, false);
+    
+    let chartData = allFilteredData.slice(0, topN);
+    const othersData = allFilteredData.slice(topN);
+
+    // Group "Others"
+    if (othersData.length > 0) {
+        const othersSum = othersData.reduce((s, r) => s + r.sumQty, 0);
+        chartData.push({
+            product: `Прочие (${othersData.length} наимен.)`,
+            sumQty: othersSum,
+            category: 'C',
+            share: othersSum / allFilteredData.reduce((s, r) => s + r.sumQty, 0),
+            isOthers: true
+        });
+    }
 
     if (paretoChart) paretoChart.destroy();
 
-    const ctx = $('paretoChart').getContext('2d');
+    const canvas = $('paretoChart');
+    const ctx = canvas.getContext('2d');
 
-    const labels = data.map(r => truncate(r.product, 30));
-    const quantities = data.map(r => r.sumQty);
+    // Dynamic width for scrollability
+    const minBarWidth = 60;
+    const requiredWidth = Math.max(canvas.parentElement.clientWidth, chartData.length * minBarWidth);
+    canvas.style.width = requiredWidth + 'px';
 
-    // Calculate cumulative for the subset
-    const subTotal = data.reduce((s, r) => s + r.sumQty, 0);
+    const labels = chartData.map(r => truncate(r.product, 25));
+    const quantities = chartData.map(r => r.sumQty);
+
+    // Calculate cumulative for the chart (based on total data, not just TOP-N)
+    const totalQty = allFilteredData.reduce((s, r) => s + r.sumQty, 0);
     let cum = 0;
-    const cumulatives = data.map(r => {
-        cum += r.sumQty / subTotal * 100;
+    const cumulatives = chartData.map(r => {
+        cum += (r.sumQty / totalQty) * 100;
         return cum;
     });
 
-    // Category colors for bars
-    const barColors = data.map(r => {
+    // Category colors
+    const barColors = chartData.map(r => {
+        if (r.isOthers) return 'rgba(139, 146, 165, 0.6)';
         if (r.category === 'A') return 'rgba(34, 197, 94, 0.7)';
         if (r.category === 'B') return 'rgba(245, 158, 11, 0.7)';
         return 'rgba(239, 68, 68, 0.7)';
     });
 
-    const barBorders = data.map(r => {
+    const barBorders = chartData.map(r => {
+        if (r.isOthers) return 'rgba(139, 146, 165, 1)';
         if (r.category === 'A') return 'rgba(34, 197, 94, 1)';
         if (r.category === 'B') return 'rgba(245, 158, 11, 1)';
         return 'rgba(239, 68, 68, 1)';
@@ -397,8 +420,8 @@ function renderParetoChart() {
                     borderColor: '#A5B4FC',
                     backgroundColor: 'rgba(165, 180, 252, 0.1)',
                     pointBackgroundColor: '#A5B4FC',
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
                     borderWidth: 2.5,
                     fill: true,
                     tension: 0.3,
@@ -408,7 +431,7 @@ function renderParetoChart() {
             ]
         },
         options: {
-            responsive: true,
+            responsive: false, // Set false to respect manual width
             maintainAspectRatio: false,
             interaction: {
                 intersect: false,
@@ -421,44 +444,49 @@ function renderParetoChart() {
                     labels: {
                         color: '#8B92A5',
                         font: { family: 'Inter', size: 12 },
-                        padding: 16,
-                        usePointStyle: true,
-                        pointStyleWidth: 16
+                        padding: 20,
+                        usePointStyle: true
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(22, 27, 39, 0.95)',
-                    borderColor: 'rgba(99, 102, 241, 0.3)',
+                    backgroundColor: 'rgba(22, 27, 39, 0.98)',
+                    borderColor: 'rgba(99, 102, 241, 0.4)',
                     borderWidth: 1,
                     titleColor: '#E8EAED',
-                    bodyColor: '#A5B4FC',
-                    titleFont: { family: 'Inter', weight: '600', size: 13 },
-                    bodyFont: { family: 'Inter', size: 12 },
-                    padding: 12,
+                    bodyColor: '#E8EAED',
+                    padding: 14,
                     cornerRadius: 8,
+                    titleFont: { family: 'Inter', weight: '700', size: 14 },
+                    bodyFont: { family: 'Inter', size: 13 },
                     callbacks: {
+                        title: (items) => chartData[items[0].dataIndex].product,
                         label: function(ctx) {
+                            const item = chartData[ctx.dataIndex];
                             if (ctx.dataset.label === 'Кол-во') {
-                                return ` Кол-во: ${formatNumber(ctx.parsed.y)}`;
+                                const lines = [
+                                    ` Кол-во: ${formatNumber(item.sumQty)}`,
+                                    ` Доля: ${(item.share * 100).toFixed(2)}%`
+                                ];
+                                if (!item.isOthers) {
+                                    lines.push(` Категория: ${item.category}`);
+                                }
+                                return lines;
                             }
-                            return ` Кумул.: ${ctx.parsed.y.toFixed(1)}%`;
+                            return ` Кумулятивно: ${ctx.parsed.y.toFixed(1)}%`;
                         }
                     }
-                },
-                // 80% threshold annotation
-                annotation: undefined
+                }
             },
             scales: {
                 x: {
                     ticks: {
-                        color: '#5C6478',
-                        font: { family: 'Inter', size: 10 },
-                        maxRotation: 45,
-                        minRotation: 30,
+                        color: '#8B92A5',
+                        font: { family: 'Inter', size: 11 },
+                        maxRotation: 60,
+                        minRotation: 45,
+                        autoSkip: false
                     },
-                    grid: {
-                        display: false
-                    }
+                    grid: { display: false }
                 },
                 y: {
                     position: 'left',
@@ -468,14 +496,12 @@ function renderParetoChart() {
                         font: { family: 'Inter', size: 11 },
                         callback: (v) => formatNumber(v)
                     },
-                    grid: {
-                        color: 'rgba(99, 102, 241, 0.06)',
-                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.04)' },
                     title: {
                         display: true,
-                        text: 'Количество',
+                        text: 'Количество списаний',
                         color: '#8B92A5',
-                        font: { family: 'Inter', size: 12, weight: '500' }
+                        font: { family: 'Inter', size: 12 }
                     }
                 },
                 y1: {
@@ -487,20 +513,17 @@ function renderParetoChart() {
                         font: { family: 'Inter', size: 11 },
                         callback: (v) => v + '%'
                     },
-                    grid: {
-                        drawOnChartArea: false
-                    },
+                    grid: { drawOnChartArea: false },
                     title: {
                         display: true,
                         text: 'Кумулятивная доля',
                         color: '#8B92A5',
-                        font: { family: 'Inter', size: 12, weight: '500' }
+                        font: { family: 'Inter', size: 12 }
                     }
                 }
             }
         },
         plugins: [{
-            // Draw 80% threshold line
             id: 'paretoLine',
             afterDraw(chart) {
                 const y1 = chart.scales.y1;
@@ -508,17 +531,17 @@ function renderParetoChart() {
                 const ctx = chart.ctx;
                 ctx.save();
                 ctx.beginPath();
-                ctx.setLineDash([6, 4]);
-                ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)';
+                ctx.setLineDash([8, 4]);
+                ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)';
                 ctx.lineWidth = 1.5;
                 ctx.moveTo(chart.chartArea.left, yPixel);
                 ctx.lineTo(chart.chartArea.right, yPixel);
                 ctx.stroke();
 
-                ctx.fillStyle = 'rgba(239, 68, 68, 0.8)';
-                ctx.font = '11px Inter';
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.9)';
+                ctx.font = 'bold 11px Inter';
                 ctx.textAlign = 'right';
-                ctx.fillText('80%', chart.chartArea.right - 4, yPixel - 6);
+                ctx.fillText('Порог 80%', chart.chartArea.right - 8, yPixel - 8);
                 ctx.restore();
             }
         }]
