@@ -10,6 +10,8 @@ let warehouses = [];          // unique warehouse names
 let activeTab = 'global';     // current tab
 let paretoChart = null;       // Chart.js instance
 let currentSort = { field: 'qty', dir: 'desc' };
+let filePeriod = '';          // period extracted from Excel header
+let fileName = '';            // uploaded file name
 
 // ── DOM refs ───────────────────────────────
 const $ = (id) => document.getElementById(id);
@@ -64,6 +66,7 @@ function handleFile(file) {
         return;
     }
 
+    fileName = file.name;
     uploadSection.style.display = 'none';
     loadingOverlay.style.display = 'flex';
 
@@ -90,6 +93,30 @@ function parseExcel(buffer) {
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
 
     rawData = [];
+    filePeriod = '';
+
+    // Extract period from header rows (first 10 rows)
+    for (let i = 0; i < Math.min(rows.length, 10); i++) {
+        const row = rows[i];
+        if (!row) continue;
+        for (const cell of row) {
+            if (typeof cell === 'string' && cell.toLowerCase().includes('период')) {
+                // Try to extract date range like "01.03.2026 - 21.05.2026"
+                const dateMatch = cell.match(/(\d{2}\.\d{2}\.\d{4})\s*[-–—]\s*(\d{2}\.\d{2}\.\d{4})/);
+                if (dateMatch) {
+                    filePeriod = `${dateMatch[1]} — ${dateMatch[2]}`;
+                } else {
+                    // Fallback: take everything after "Период:" or "период:"
+                    const afterPeriod = cell.match(/[Пп]ериод[:\s]*(.+)/i);
+                    if (afterPeriod) {
+                        filePeriod = afterPeriod[1].trim();
+                    }
+                }
+                break;
+            }
+        }
+        if (filePeriod) break;
+    }
 
     // Find header row — look for row containing 'Товар' or 'Кол-во'
     let headerIdx = 0;
@@ -189,6 +216,30 @@ function showResults() {
     $('statRows').textContent = rawData.length.toLocaleString('ru-RU');
     $('statProducts').textContent = globalABC.length.toLocaleString('ru-RU');
     $('statWarehouses').textContent = warehouses.length.toLocaleString('ru-RU');
+
+    // Period badge
+    const periodBadge = $('periodBadge');
+    if (filePeriod) {
+        $('periodText').textContent = filePeriod;
+        periodBadge.style.display = '';
+    } else {
+        periodBadge.style.display = 'none';
+    }
+
+    // File name badge
+    const fileNameBadge = $('fileNameBadge');
+    if (fileName) {
+        $('fileNameText').textContent = fileName;
+        fileNameBadge.style.display = '';
+    } else {
+        fileNameBadge.style.display = 'none';
+    }
+
+    // Update panel titles with period
+    const periodSuffix = filePeriod ? ` · ${filePeriod}` : '';
+    $('panelTitleGlobal').textContent = 'ABC-Анализ — Общий' + periodSuffix;
+    $('panelTitleWarehouse').textContent = 'ABC-Анализ — По складам' + periodSuffix;
+    $('panelTitlePareto').textContent = 'Парето-диаграмма (80/20)' + periodSuffix;
 
     // Summary cards
     updateSummaryCards(globalABC);

@@ -31,6 +31,14 @@
             </div>
             <div class="header-actions">
                 <div class="stats-badges" id="headerStats" style="display:none;">
+                    <div class="stat-badge period-badge" id="periodBadge" style="display:none;">
+                        <span class="stat-label">Период</span>
+                        <span class="stat-value period-value" id="periodText"></span>
+                    </div>
+                    <div class="stat-badge file-badge" id="fileNameBadge" style="display:none;">
+                        <span class="stat-label">Файл</span>
+                        <span class="stat-value file-value" id="fileNameText"></span>
+                    </div>
                     <div class="stat-badge">
                         <span class="stat-label">Строк</span>
                         <span class="stat-value" id="statRows">0</span>
@@ -185,7 +193,7 @@
             <!-- Global Table -->
             <div class="table-panel" id="panelGlobal">
                 <div class="table-header-bar">
-                    <h2 class="panel-title">ABC-Анализ — Общий</h2>
+                    <h2 class="panel-title" id="panelTitleGlobal">ABC-Анализ — Общий</h2>
                     <span class="row-count" id="globalRowCount">0 записей</span>
                 </div>
                 <div class="table-container">
@@ -208,7 +216,7 @@
             <!-- Warehouse Table -->
             <div class="table-panel" id="panelWarehouse" style="display:none;">
                 <div class="table-header-bar">
-                    <h2 class="panel-title">ABC-Анализ — По складам</h2>
+                    <h2 class="panel-title" id="panelTitleWarehouse">ABC-Анализ — По складам</h2>
                     <span class="row-count" id="warehouseRowCount">0 записей</span>
                 </div>
                 <div class="table-container">
@@ -232,7 +240,7 @@
             <!-- Pareto Chart -->
             <div class="table-panel chart-panel" id="panelPareto" style="display:none;">
                 <div class="table-header-bar">
-                    <h2 class="panel-title">Парето-диаграмма (80/20)</h2>
+                    <h2 class="panel-title" id="panelTitlePareto">Парето-диаграмма (80/20)</h2>
                     <div class="pareto-controls">
                         <label>Показать топ:</label>
                         <select id="paretoTopN" class="filter-select filter-select-sm">
